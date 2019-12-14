@@ -20,9 +20,10 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
           primarySwatch: Colors.purple,
           backgroundColor: Colors.pink.shade50,
+          accentColor: Colors.purpleAccent,
           textTheme: TextTheme(
-              display1: GoogleFonts.bungeeOutline(
-                  fontSize: 240,
+              display1: GoogleFonts.bungee(
+                  fontSize: 200,
                   fontWeight: FontWeight.bold,
                   textStyle: TextStyle(color: Colors.purple)))),
       home: MyHomePage(),
@@ -63,55 +64,36 @@ class _MyHomePageState extends State<MyHomePage> {
     height = MediaQuery.of(context).size.height;
     width = MediaQuery.of(context).size.width;
     return Scaffold(
-      backgroundColor: Theme.of(context).backgroundColor,
-      body: Stack(children: [
-        Align(
-            alignment: Alignment.bottomLeft,
-            child: Stack(children: [
-              WaveWidget(
-                  height /
-                      (60 * 1000) *
-                      ((_now.second * 1000) + _now.millisecond),
-                  1.0,
-                  0.0,
-                  Theme.of(context).accentColor.withOpacity(0.4))
-            ])),
-        _buildTime()
-      ]),
+      body: _buildTime(),
     );
   }
 
   Widget _buildTime() {
-    return Align(
-      alignment: Alignment.center,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        mainAxisSize: MainAxisSize.max,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: <Widget>[
-          Expanded(
-              child: Text(
-            (_now.hour ~/ 10).toString(),
-            style: Theme.of(context).textTheme.display1,
-          )),
-          Expanded(
-              child: Text(
-            (_now.hour % 10).toString(),
-            style: Theme.of(context).textTheme.display1,
-          )),
-          Expanded(
-              child: Text(
-            (_now.minute ~/ 10).toString(),
-            style: Theme.of(context).textTheme.display1,
-          )),
-          Expanded(
-              child: Text(
-            (_now.minute % 10).toString(),
-            style: Theme.of(context).textTheme.display1,
-          )),
-        ],
-      ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        _buildDigit((_now.hour ~/ 10).toString()),
+        _buildDigit((_now.hour % 10).toString()),
+        _buildDigit((_now.minute ~/ 10).toString()),
+        _buildDigit((_now.minute % 10).toString())
+      ],
     );
+  }
+
+  Widget _buildDigit(String time) {
+    return Expanded(
+        child: Container(
+      decoration: BoxDecoration(
+          border: Border.all(color: Colors.purple, width: 5),
+          color: Theme.of(context).accentColor.withOpacity(0.7)),
+      child: Center(
+        child: Text(
+          time,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.display1,
+        ),
+      ),
+    ));
   }
 
   @override
