@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -16,7 +17,6 @@ class MyApp extends StatelessWidget {
       DeviceOrientation.landscapeRight,
     ]);
     return MaterialApp(
-      title: 'Flutter Demo',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
           primarySwatch: Colors.purple,
@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
           accentColor: Colors.purpleAccent,
           textTheme: TextTheme(
               display1: GoogleFonts.bungee(
-                  fontSize: 200,
+                  fontSize: 150,
                   fontWeight: FontWeight.bold,
                   textStyle: TextStyle(color: Colors.purple)))),
       home: MyHomePage(),
@@ -41,8 +41,6 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage>
     with SingleTickerProviderStateMixin {
-  double height;
-  double width;
   DateTime _now;
   Timer _everySecond;
 
@@ -68,26 +66,54 @@ class _MyHomePageState extends State<MyHomePage>
     _everySecond = Timer.periodic(Duration(seconds: 1), (Timer t) {
       _updateClock();
     });
-    _animationController.forward();
   }
 
   void _updateClock() async {
     _now = DateTime.now();
 
-    if (_now.second == 0) {
-      setState(() {
-        _animationController.reset();
-        _animationController.forward();
-      });
-    }
+    setState(() {
+      if (_now.second == 0) {
+        _animationController
+          ..reset()
+          ..forward();
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    height = MediaQuery.of(context).size.height;
-    width = MediaQuery.of(context).size.width;
     return Scaffold(
-      body: _buildTime(),
+      body: AspectRatio(
+        aspectRatio: 5 / 3,
+        child: Container(
+          child: Stack(children: [
+            _buildTime(),
+            CustomPaint(
+              size: Size(MediaQuery.of(context).size.width,
+                  MediaQuery.of(context).size.height),
+              painter: SecondPainter(_now.second / 60),
+            )
+          ]),
+          decoration: BoxDecoration(
+            // Box decoration takes a gradient
+            gradient: LinearGradient(
+              // Where the linear gradient begins and ends
+              begin: Alignment.bottomCenter,
+              end: Alignment.topCenter,
+              // Add one stop for each color. Stops should increase from 0 to 1
+              colors: [
+                // Colors are easy thanks to Flutter's Colors class.
+                //Colors.purple.withOpacity(
+                //((_now.second * 1000 + _now.millisecond) / 60000) * 0.7),
+                // Colors.purple.withOpacity(0.7),
+
+                Colors.purple.withOpacity(0.0),
+                Colors.purple.withOpacity(0.7),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -112,46 +138,59 @@ class _MyHomePageState extends State<MyHomePage>
     return Expanded(
         child: Container(
       decoration: BoxDecoration(
-          border: Border.all(color: Colors.purple, width: 5),
-          color: Theme.of(context).accentColor.withOpacity(0.7)),
+          border: Border.all(color: Theme.of(context).primaryColor, width: 1)),
       child: Stack(
         children: [
           animate
-              ? Center(
-                  child: SlideTransition(
-                    position: Tween<Offset>(
-                            end: animate ? Offset(0.0, -10) : Offset.zero,
-                            begin: Offset.zero)
-                        .animate(_animation),
-                    child: Text(
-                      (number - 1).toString(),
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.display1,
-                    ),
-                  ),
-                )
+              ? _buildSlidingText(lastNumber.toString(), Offset.zero,
+                  animate ? Offset(0.0, -2) : Offset.zero)
               : Container(),
-          Center(
-            child: SlideTransition(
-              position: Tween<Offset>(
-                      begin: animate ? Offset(0.0, 10) : Offset.zero,
-                      end: Offset.zero)
-                  .animate(_animation),
-              child: Text(
-                number.toString(),
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.display1,
-              ),
-            ),
-          )
+          _buildSlidingText(number.toString(),
+              animate ? Offset(0.0, 2) : Offset.zero, Offset.zero)
         ],
       ),
     ));
   }
 
+  Widget _buildSlidingText(String text, Offset begin, Offset end) {
+    return Center(
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: begin,
+          end: end,
+        ).animate(_animation),
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.display1,
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _everySecond.cancel();
+    _animationController.dispose();
     super.dispose();
+  }
+}
+
+class SecondPainter extends CustomPainter {
+  final double height;
+  SecondPainter(this.height);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = Colors.purple.withOpacity(0.2);
+    canvas.drawRect(
+        Rect.fromLTRB(
+            0, size.height, size.width, size.height - (size.height * height)),
+        paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    return true;
   }
 }
